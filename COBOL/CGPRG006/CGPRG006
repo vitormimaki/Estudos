@@ -1,0 +1,267 @@
+       IDENTIFICATION DIVISION.
+      *=======================*
+       PROGRAM-ID.   CGPRG006.
+       AUTHOR.       VITOR MIMAKI.
+       INSTALLATION. FATEC SAO CAETANO.
+       DATE-WRITTEN. 22/04/2025.
+       DATE-COMPILED. 22/04/2025.
+      *--------------------------------------------------------------*
+       ENVIRONMENT DIVISION.
+      *====================*
+       CONFIGURATION SECTION.
+      *---------------------*
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA
+           CURRENCY SIGN IS "R$ " WITH PICTURE SYMBOL "$"
+           .
+       INPUT-OUTPUT SECTION.
+      *---------------------*
+       DATA DIVISION.
+      *=============*
+       FILE SECTION.
+      *------------*
+       WORKING-STORAGE SECTION.
+      *-----------------------*
+       77 WS-HIFENS                 PIC X(80) VALUE ALL '-'.
+       77 WS-DATA                   PIC 9(08).
+       77 WS-CTLID                  PIC 9(02).
+       77 WS-PACIDS                 PIC 9(03)V9(04) VALUE ZEROS.
+       77 CODCIDMA                  PIC 9(05) VALUE ZEROS.
+       77 CODCIDME                  PIC 9(05) VALUE ZEROS.
+       77 ATCD                      PIC ZZZ9.
+       77 POAC                      PIC ZZ9,99.
+       77 POAC-INT                  PIC 9(03)V99 VALUE ZEROS.
+      *-----> VARIAVEIS AUXILIARES UTILIZADA NO PROCESSAMENTO
+       01  WS-AREA-AUX.
+           05  WS-FIM                 PIC X(01).
+           05  WS-CTLIDO              PIC 9(02).
+      *-----> ENTRADA - DADOS VIA SYSIN (NO JCL DE EXECUCAO)
+       01  WS-REG-SYSIN.
+           05 WS-CIDADE           PIC 9(05).
+           05 WS-ESTADO           PIC X(02).
+           05 WS-QTD-VEICULOS     PIC 9(07).
+           05 WS-BAFOMETRO        PIC X(01).
+           05 WS-QTD-ACIDENTES    PIC 9(04).
+           05 WS-QTD-OBITOS       PIC 9(04).
+       01  WS-REG-SP.
+           05 CODSP                  PIC 9(05) VALUE ZEROS.
+           05 CONTASP                PIC 99 VALUE ZEROS.
+           05 QTD-ACIDS-SP           PIC 9(06) VALUE ZEROS.
+           05 SOMA-PSP               PIC 9(04)V9(04) VALUE ZEROS.
+           05 MEDIA-PSP              PIC 9(03)V9(04) VALUE ZEROS.
+           05 WS-MPSP                PIC ZZ9,99.
+           05 WS-ATSP                PIC ZZZ.ZZ9.
+           05 WS-CDSP                PIC Z9.
+       01  WS-REG-RJ.
+           05 CODRJ                  PIC 9(05) VALUE ZEROS.
+           05 CONTARJ                PIC 99 VALUE ZEROS.
+           05 QTD-ACIDS-RJ           PIC 9(06) VALUE ZEROS.
+           05 SOMA-PRJ               PIC 9(04)V9(04) VALUE ZEROS.
+           05 MEDIA-PRJ              PIC 9(03)V9(04) VALUE ZEROS.
+           05 WS-MPRJ                PIC ZZ9,99.
+           05 WS-ATRJ                PIC ZZZ.ZZ9.
+           05 WS-CDRJ                PIC Z9.
+       01  WS-REG-MG.
+           05 CODMG                  PIC 9(05) VALUE ZEROS.
+           05 CONTAMG                PIC 99 VALUE ZEROS.
+           05 QTD-ACIDS-MG           PIC 9(06) VALUE ZEROS.
+           05 SOMA-PMG               PIC 9(04)V9(04) VALUE ZEROS.
+           05 MEDIA-PMG              PIC 9(03)V9(04) VALUE ZEROS.
+           05 WS-MPMG                PIC ZZ9,99.
+           05 WS-ATMG                PIC ZZZ.ZZ9.
+           05 WS-CDMG                PIC Z9.
+       01  WS-REG-SYSOUT.
+           05 CID                PIC 99999 VALUE ZEROS.
+           05 FILLER             PIC X VALUE '-'.
+           05 UF                 PIC X(02) VALUE SPACES.
+           05 FILLER             PIC X(03) VALUE SPACES.
+           05 QTVEICS            PIC Z.ZZZ.ZZ9 VALUE ZEROS.
+           05 FILLER             PIC X(05) VALUE SPACES.
+           05 BAFO               PIC X VALUE SPACES.
+           05 FILLER             PIC X(06) VALUE SPACES.
+           05 QTACIDS            PIC Z.ZZ9 VALUE ZEROS.
+           05 FILLER             PIC X(03) VALUE SPACES.
+           05 QTOBITOS           PIC Z.ZZ9 VALUE ZEROS.
+           05 FILLER             PIC X(02) VALUE SPACES.
+           05 PACIDS             PIC ZZ9,99 VALUE ZEROS.
+           05 FILLER             PIC X VALUE '%'.
+       01  WS-CAB.
+           05 FILLER             PIC X(07) VALUE  'CIDADES'.
+           05 FILLER             PIC X(05) VALUE SPACES.
+           05 FILLER             PIC X(08) VALUE 'VEICULOS'.
+           05 FILLER             PIC X(03) VALUE SPACES.
+           05 FILLER             PIC X(05) VALUE 'BAFOM'.
+           05 FILLER             PIC X(01) VALUE SPACES.
+           05 FILLER             PIC X(09) VALUE 'ACIDENTES'.
+           05 FILLER             PIC X(01) VALUE SPACES.
+           05 FILLER             PIC X(06) VALUE 'OBITOS'.
+           05 FILLER             PIC X(01) VALUE SPACES.
+           05 FILLER             PIC X(09) VALUE 'ACID/VEIC'.
+      *
+       PROCEDURE DIVISION.
+      *==================*
+      *--------------------------------------------------------------*
+      *    PROCESSO PRINCIPAL
+      *--------------------------------------------------------------*
+       000-CGPRG006.
+
+           PERFORM 010-INICIAR
+           PERFORM 030-PROCESSAR UNTIL WS-FIM = 'S'
+           PERFORM 090-TERMINAR
+           STOP RUN
+           .
+      *--------------------------------------------------------------*
+      *    PROCEDIMENTOS INICIAIS
+      *--------------------------------------------------------------*
+       010-INICIAR.
+
+           DISPLAY 'VITOR MIMAKI - ARTHUR DE QUEIROZ'
+           DISPLAY 'ATIVIDADE 6'
+           ACCEPT WS-DATA FROM DATE
+           DISPLAY 'ESTATISTICAS - DATA DO CALCULO: '
+                   WS-DATA(7:2) '/' WS-DATA(5:2) '/' WS-DATA(1:4)
+           DISPLAY WS-HIFENS
+           DISPLAY WS-CAB
+           DISPLAY WS-HIFENS
+           PERFORM 025-LER-SYSIN
+           .
+      *--------------------------------------------------------------*
+      *    LEITURA DADOS DA SYSIN
+      *--------------------------------------------------------------*
+       025-LER-SYSIN.
+
+           ACCEPT WS-REG-SYSIN  FROM SYSIN
+
+           IF WS-REG-SYSIN = ALL '9'
+              MOVE   'S'     TO  WS-FIM
+           ELSE
+              ADD 1  TO WS-CTLID
+           END-IF
+           .
+      *--------------------------------------------------------------*
+      *    PROCESSAR DADOS RECEBIDOS DA SYSIN ATE FIM DOS REGISTROS
+      *--------------------------------------------------------------*
+       030-PROCESSAR.
+
+           MOVE WS-CIDADE TO CID
+           MOVE WS-ESTADO TO UF
+           MOVE WS-QTD-VEICULOS TO QTVEICS
+           MOVE WS-BAFOMETRO TO BAFO
+           MOVE WS-QTD-ACIDENTES TO QTACIDS
+           MOVE WS-QTD-OBITOS TO QTOBITOS
+           COMPUTE WS-PACIDS = WS-QTD-ACIDENTES / WS-QTD-VEICULOS
+                               * 100
+           MOVE WS-PACIDS TO PACIDS
+           IF WS-ESTADO = 'SP'
+              MOVE WS-CIDADE TO CODSP
+              ADD 1 TO CONTASP
+              ADD WS-PACIDS TO SOMA-PSP
+              ADD WS-QTD-ACIDENTES TO QTD-ACIDS-SP
+              PERFORM 040-PROCESSAR-SP
+           END-IF
+           IF WS-ESTADO = 'RJ'
+              MOVE WS-CIDADE TO CODRJ
+              ADD 1 TO CONTARJ
+              ADD WS-PACIDS TO SOMA-PRJ
+              ADD WS-QTD-ACIDENTES TO QTD-ACIDS-RJ
+              PERFORM 041-PROCESSAR-RJ
+           END-IF
+           IF WS-ESTADO = 'MG'
+              MOVE WS-CIDADE TO CODMG
+              ADD 1 TO CONTAMG
+              ADD WS-PACIDS TO SOMA-PMG
+              ADD WS-QTD-ACIDENTES TO QTD-ACIDS-MG
+              PERFORM 042-PROCESSAR-MG
+           END-IF
+
+           DISPLAY WS-REG-SYSOUT
+           PERFORM 045-PROCESSAR-MAIOR
+           PERFORM 047-PROCESSAR-MENOR
+           PERFORM 025-LER-SYSIN
+           .
+      *--------------------------------------------------------------*
+      *    PROCESSAR - SP
+      *--------------------------------------------------------------*
+       040-PROCESSAR-SP.
+           COMPUTE MEDIA-PSP = SOMA-PSP / CONTASP
+           MOVE MEDIA-PSP TO WS-MPSP
+           MOVE QTD-ACIDS-SP TO WS-ATSP
+           MOVE CONTASP TO WS-CDSP
+           .
+      *--------------------------------------------------------------*
+      *    PROCESSAR - RJ
+      *--------------------------------------------------------------*
+       041-PROCESSAR-RJ.
+
+           COMPUTE MEDIA-PRJ = SOMA-PRJ / CONTARJ
+           MOVE MEDIA-PRJ TO WS-MPRJ
+           MOVE QTD-ACIDS-RJ TO WS-ATRJ
+           MOVE CONTARJ TO WS-CDRJ
+           .
+      *--------------------------------------------------------------*
+      *    PROCESSAR - MG
+      *--------------------------------------------------------------*
+       042-PROCESSAR-MG.
+
+           COMPUTE MEDIA-PMG = SOMA-PMG / CONTAMG
+           MOVE MEDIA-PMG TO WS-MPMG
+           MOVE QTD-ACIDS-MG TO WS-ATMG
+           MOVE CONTAMG TO WS-CDMG
+           .
+      *--------------------------------------------------------------*
+      *    PROCESSAR - MAIOR
+      *--------------------------------------------------------------*
+       045-PROCESSAR-MAIOR.
+
+            IF WS-QTD-ACIDENTES > ATCD
+               MOVE WS-QTD-ACIDENTES TO ATCD
+               MOVE WS-CIDADE TO CODCIDMA
+            END-IF
+            .
+      *--------------------------------------------------------------*
+      *    PROCESSAR - MENOR
+      *--------------------------------------------------------------*
+       047-PROCESSAR-MENOR.
+            IF WS-QTD-ACIDENTES > 0
+               COMPUTE WS-PACIDS = (WS-QTD-OBITOS / WS-QTD-ACIDENTES)
+                                   * 100
+               IF (POAC-INT = 0) OR (WS-PACIDS < POAC-INT)
+                  MOVE WS-CIDADE TO CODCIDME
+                  MOVE WS-PACIDS TO POAC-INT
+                  MOVE POAC-INT TO POAC
+               END-IF
+            END-IF
+            .
+      *--------------------------------------------------------------*
+      *    PROCEDIMENTOS FINAIS
+      *--------------------------------------------------------------*
+       090-TERMINAR.
+           DISPLAY WS-HIFENS
+           DISPLAY 'MEDIA DAS PORCENTAGENS DE SP......: ' WS-MPSP
+           DISPLAY 'QTDE. DE ACIDENTES TOTAIS DE SP...: ' WS-ATSP
+           DISPLAY 'QTDE. DE CIDADES DE SP PESQUISADAS: ' WS-CDSP
+           DISPLAY WS-HIFENS
+           DISPLAY 'MEDIA DAS PORCENTAGENS DE RJ......: ' WS-MPRJ
+           DISPLAY 'QTDE. DE ACIDENTES TOTAIS DE RJ...: ' WS-ATRJ
+           DISPLAY 'QTDE. DE CIDADES DE RJ PESQUISADAS: ' WS-CDRJ
+           DISPLAY WS-HIFENS
+           DISPLAY 'MEDIA DAS PORCENTAGENS DE MG......: ' WS-MPMG
+           DISPLAY 'QTDE. DE ACIDENTES TOTAIS DE MG...: ' WS-ATMG
+           DISPLAY 'QTDE. DE CIDADES DE MG PESQUISADAS: ' WS-CDMG
+           DISPLAY WS-HIFENS
+           DISPLAY 'CIDADE COM MAIOR QTDE DE ACIDENTES: ' CODCIDMA
+           DISPLAY 'QTDE. DE ACIDENTES DESTA CIDADE...: ' ATCD
+           DISPLAY 'QTDE. TOTAL DE CIDADES PESQUISADAS: ' WS-CTLID
+           DISPLAY WS-HIFENS
+           DISPLAY 'CIDADE C/ MENOR PORCENT. OBITO/ACI: ' CODCIDME
+           DISPLAY 'PORCENT. DE OBITO/ACI DESTA CIDADE: ' POAC '%'
+           DISPLAY ' *========================================*'
+           DISPLAY ' *   TOTAIS DE CONTROLE - CGPRG006        *'
+           DISPLAY ' *----------------------------------------*'
+           DISPLAY ' * REGISTROS LIDOS    - SYSIN  = ' WS-CTLID
+           DISPLAY ' *========================================*'
+           DISPLAY ' *----------------------------------------*'
+           DISPLAY ' *      TERMINO NORMAL DO CGPRG006        *'
+           DISPLAY ' *----------------------------------------*'
+           .
+      *---------------> FIM DO PROGRAMA CGPRG006 <-------------------*
